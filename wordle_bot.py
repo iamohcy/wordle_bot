@@ -371,13 +371,14 @@ def enter(update, context):
                     wordFormatted = wordFormatted.rstrip()
                     context.chat_data["attempt_words"].append(wordFormatted)
 
-                    context.bot.send_message(chat_id=chat_id, text="-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n", parse_mode=telegram.ParseMode.HTML)
+                    message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
                     for word_str in context.chat_data["attempt_words"]:
-                        context.bot.send_message(chat_id=chat_id, text=word_str, parse_mode=telegram.ParseMode.HTML)
+                        message += word_str + "\n"
+
+                    context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                     if (context.chat_data["attempt"] == MAX_ATTEMPTS):
-                        context.bot.send_message(chat_id=chat_id, text="Fifth attempt failed. Game Over. The word was: " + actualWord, parse_mode=telegram.ParseMode.HTML)
-                        context.bot.send_message(chat_id=chat_id, text="Type /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+                        context.bot.send_message(chat_id=chat_id, text="Fifth attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
                         return
 
             return
