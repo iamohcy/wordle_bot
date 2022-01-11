@@ -80,8 +80,7 @@ def new_game(update, context):
     context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":chosenWord, "hasSuperUser":False}
     context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
 
-    if chat_id in context.bot_data["runningChatIds"]:
-        context.bot_data["runningChatIds"].remove(chat_id)
+    context.bot_data["runningChatIds"].add(chat_id)
 
     totalNumGamesRunning = len(context.bot_data["runningChatIds"])
     print("--------------------------")
@@ -98,6 +97,8 @@ def new_game(update, context):
     context.chat_data["attempt"] = 0
     context.chat_data["attempt_words"] = []
 
+    if "scores" not in context.chat_data:
+        context.chat_data["scores"] = []
 
     context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
     context.bot.send_message(chat_id=chat_id, text="__ __ __ __ __", parse_mode=telegram.ParseMode.HTML)
@@ -109,21 +110,57 @@ def new_game(update, context):
 
     # context.bot.send_message(chat_id=chat_id, text="If you experience any bugs or issues during your use of this bot, feel free to send a message/screenshot describing the error to wavelengthbot@gmail.com", parse_mode=telegram.ParseMode.HTML)
 
+def reset_scores(update, context):
+    if (update.message == None):
+        return
+
+    chat_id = update.message.chat_id
+    chat_bot = context.bot
+
+    if (chat_id > 0):
+        chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
+    else:
+        context.chat_data["scores"] = []
+        chat_bot.send_message(chat_id=chat_id, text="Round data has been reset!", parse_mode=telegram.ParseMode.HTML)
+
+def print_scores(update, context):
+    if (update.message == None):
+        return
+
+    chat_id = update.message.chat_id
+    chat_bot = context.bot
+
+    if (chat_id > 0):
+        chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
+
+    if len(context.chat_data["scores"]) == 0:
+        message = "You have no historical round data!\n"
+    else:
+        message = "You managed to find the word on rounds: \n\n"
+        message += " | ".join(context.chat_data["scores"]) + "\n"
+
+    context.bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+
 def letters_remaining(update, context):
     if (update.message == None):
         return
+    chat_id = update.message.chat_id
+    chat_bot = context.bot
+
+    if (chat_id > 0):
+        chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
 
     message = "The letters remaining are: \n\n"
     message += " ".join(context.chat_data["letters_remaining"]) + "\n"
 
-    context.bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+    chat_bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
 def help(update, context):
     if (update.message == None):
         return
 
     message = "Welcome to the (Unofficial) Telegram Bot Adaptation of <b>Wordle!</b>\n\n"
-    message += "You have five guesses to guess a five letter word. Each time you make a guess, the letters will be formatted:\n\n"
+    message += "You have six guesses to guess a five letter word. Each time you make a guess, the letters will be formatted:\n\n"
 
     message += "<b><u>A</u></b> if the letter is correct and in the right place\n"
     message += "<b>B</b> if the letter is correct and in the wrong place\n"
@@ -135,6 +172,8 @@ def help(update, context):
     message += "/stop: Stop current game\n"
     message += "/enter: Enter a word attempt\n"
     message += "/letters: See any remaining letters\n"
+    message += "/scores: See which rounds you found the words in\n"
+    message += "/reset_scores: Clear your round data\n"
     message += "/help: See game instructions\n"
     # message += "1) Create a group chat\n"
     # message += "2) Add the bot to your group chat\n"
@@ -153,123 +192,117 @@ def help(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
     # context.bot.send_message(chat_id=update.message.chat_id, text="If you like this digital implementation of Wavelength, consider getting the actual board game:\nhttps://boardgamegeek.com/boardgame/262543/wavelength", parse_mode=telegram.ParseMode.HTML)
 
-# def announce(update, context):
+def announce(update, context):
 
-#     if (update.message == None):
-#         return
+    if (update.message == None):
+        return
 
-#     chat_id = update.message.chat_id
-#     userId = update.message.from_user.id
-#     bot_data = context.bot_data
+    chat_id = update.message.chat_id
+    userId = update.message.from_user.id
+    bot_data = context.bot_data
 
-#     isSuperUser = (userId == SUPERUSER_ID)
-#     if isSuperUser:
-#         if (chat_id < 0):
-#             return
+    isSuperUser = (userId == SUPERUSER_ID)
+    if isSuperUser:
+        if (chat_id < 0):
+            return
 
-#         messageData = update.message.text.split(" ", 2)
+        messageData = update.message.text.split(" ", 2)
+        if len(messageData) < 3:
+            context.bot.send_message(chat_id=userId, text="You need a message! Example: '/announce This is my message'", parse_mode=telegram.ParseMode.HTML)
+            return
 
-#         if len(messageData) < 3:
-#             context.bot.send_message(chat_id=userId, text="You need a message! Example: '/announce This is my message'", parse_mode=telegram.ParseMode.HTML)
-#             return
+        try:
+            send_chat_id = int(messageData[1])
+            message = messageData[2]
+        except:
+            send_chat_id = 0
+            message = messageData[1] + " " + messageData[2]
 
-#         try:
-#             send_chat_id = int(messageData[1])
-#         except:
-#             send_chat_id = 0
+        removedChatIds = []
+        newIdPairs = []
+        if ("chat_debug_data" in bot_data):
+            for chat_id in bot_data["chat_debug_data"]:
+                try:
+                    if (send_chat_id == 0 or send_chat_id == chat_id):
+                        context.bot.send_message(chat_id=chat_id, text="<b>%s</b>" % message, parse_mode=telegram.ParseMode.HTML)
+                except Unauthorized:
+                    removedChatIds.append(chat_id)
+                except ChatMigrated as e:
+                    new_chat_id = e.new_chat_id
+                    newIdPairs.append((chat_id, new_chat_id))
+                except Exception as e:
+                    print (e)
 
-#         message = messageData[2]
-#         removedChatIds = []
-#         newIdPairs = []
-#         if ("chat_debug_data" in bot_data):
-#             for chat_id in bot_data["chat_debug_data"]:
-#                 try:
-#                     if (send_chat_id == 0 or send_chat_id == chat_id):
-#                         context.bot.send_message(chat_id=chat_id, text="<b>%s</b>" % message, parse_mode=telegram.ParseMode.HTML)
-#                 except Unauthorized:
-#                     removedChatIds.append(chat_id)
-#                 except ChatMigrated as e:
-#                     new_chat_id = e.new_chat_id
-#                     newIdPairs.append((chat_id, new_chat_id))
-#                 except Exception as e:
-#                     print (e)
+            # Handle update and deletion of new ids
+            for chat_id_delete in removedChatIds:
+                del bot_data["chat_debug_data"][chat_id_delete]
 
-#             # Handle update and deletion of new ids
-#             for chat_id_delete in removedChatIds:
-#                 del bot_data["chat_debug_data"][chat_id_delete]
-
-#             for (old_chat_id, new_chat_id) in newIdPairs:
-#                 bot_data["chat_debug_data"][new_chat_id] = bot_data["chat_debug_data"][old_chat_id]
-#                 del bot_data["chat_debug_data"][old_chat_id]
+            for (old_chat_id, new_chat_id) in newIdPairs:
+                bot_data["chat_debug_data"][new_chat_id] = bot_data["chat_debug_data"][old_chat_id]
+                del bot_data["chat_debug_data"][old_chat_id]
 
 
-# def server_info(update, context):
+def server_info(update, context):
 
-#     if (update.message == None):
-#         return
+    if (update.message == None):
+        return
 
-#     chat_id = update.message.chat_id
-#     userId = update.message.from_user.id
-#     bot_data = context.bot_data
+    chat_id = update.message.chat_id
+    userId = update.message.from_user.id
+    bot_data = context.bot_data
 
-#     messageOption = None
-#     messageOptionData = update.message.text.split()
-#     if len(messageOptionData) > 1:
-#         messageOption = messageOptionData[1]
+    messageOption = None
+    messageOptionData = update.message.text.split()
+    if len(messageOptionData) > 1:
+        messageOption = messageOptionData[1]
 
-#     isSuperUser = (userId == SUPERUSER_ID)
-#     if isSuperUser:
-#         if (chat_id < 0):
-#             return
+    isSuperUser = (userId == SUPERUSER_ID)
+    if isSuperUser:
+        if (chat_id < 0):
+            return
 
-#         if ("chat_debug_data" in bot_data):
-#             if messageOption == "info":
-#                 context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
+        if ("chat_debug_data" in bot_data):
+            if messageOption == "info":
+                context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
 
-#                 percentageText = "Percentage Data\n---------------\n"
-#                 count = 0
-#                 for chat_id in bot_data["chat_debug_data"]:
-#                     chat_datum = bot_data["chat_debug_data"][chat_id]
-#                     title = chat_datum["title"]
-#                     percentage = chat_datum["percentage"]
+                wordText = "Word Data\n---------------\n"
+                count = 0
+                for chat_id in bot_data["chat_debug_data"]:
+                    chat_datum = bot_data["chat_debug_data"][chat_id]
+                    title = chat_datum["title"]
+                    word = chat_datum["word"]
 
-#                     percentageText += "<b>%s</b> chat at <b>%d percent</b> [%d]\n" % (title, percentage, chat_id)
-#                     if count > 50:
-#                         context.bot.send_message(chat_id=userId, text=percentageText, parse_mode=telegram.ParseMode.HTML)
-#                         percentageText = ""
-#                 if percentageText != "":
-#                     context.bot.send_message(chat_id=userId, text=percentageText, parse_mode=telegram.ParseMode.HTML)
-#             elif messageOption == "update_running":
+                    wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, word, chat_id)
+                    if count > 50:
+                        context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
+                        wordText = ""
+                if wordText != "":
+                    context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
+            elif messageOption == "update_running":
 
-#                 context.bot_data["runningChatIds"] = set()
-#                 for chat_id in bot_data["chat_debug_data"]:
-#                     chat_datum = bot_data["chat_debug_data"][chat_id]
-#                     percentage = chat_datum["percentage"]
-#                     if percentage >= 0:
-#                         context.bot_data["runningChatIds"].add(chat_id)
+                context.bot_data["runningChatIds"] = set()
+                for chat_id in bot_data["chat_debug_data"]:
+                    chat_datum = bot_data["chat_debug_data"][chat_id]
+                    word = chat_datum["word"]
+                    if len(word) >= 0:
+                        context.bot_data["runningChatIds"].add(chat_id)
 
-#             elif messageOption == "self":
-#                 context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
+            elif messageOption == "self":
+                context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
 
-#                 percentageText = "Percentage Data\n---------------\n"
-#                 for chat_id in bot_data["chat_debug_data"]:
-#                     chat_datum = bot_data["chat_debug_data"][chat_id]
-#                     title = chat_datum["title"]
-#                     percentage = chat_datum["percentage"]
+                percentageText = "Percentage Data\n---------------\n"
+                for chat_id in bot_data["chat_debug_data"]:
+                    chat_datum = bot_data["chat_debug_data"][chat_id]
+                    title = chat_datum["title"]
+                    word = chat_datum["word"]
 
-#                     try:
-#                         if chat_datum["hasSuperUser"]:
-#                             percentageText += "<b>%s</b> chat at <b>%d%%</b>\n" % (title, percentage)
-#                     except:
-#                         continue
+                    try:
+                        if chat_datum["hasSuperUser"]:
+                            wordText += "<b>%s</b> chat at <b>%d%%</b>\n" % (title, word)
+                    except:
+                        continue
 
-#                 context.bot.send_message(chat_id=userId, text=percentageText, parse_mode=telegram.ParseMode.HTML)
-#             elif messageOption == "shutdown":
-#                 for chat_id in bot_data["chat_debug_data"]:
-#                     context.bot.send_message(chat_id=chat_id, text="<b>Server will be down for 1-5 minutes, we apologize for the inconvenience!</b>", parse_mode=telegram.ParseMode.HTML)
-#             elif messageOption == "csv":
-#                 refreshPairCsv()
-#                 context.bot.send_message(chat_id=userId, text="CSV Refreshed! Number of pair entries: %d" % totalNumPairs(), parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=userId, text=percentageText, parse_mode=telegram.ParseMode.HTML)
 
 def stop(update, context):
 
@@ -297,7 +330,8 @@ def stopGame(chat_data, bot_data, chat_id, chat_bot):
         bot_data["chat_debug_data"][chat_id]["word"] = ""
 
     # Reset data
-    del chat_data["gameStarted"]
+    chat_data["gameStarted"] = False
+    chat_data["word"] = ""
 
     bot_data["chat_debug_data"][chat_id]["hasSuperUser"] = False
     chat_bot.send_message(chat_id=chat_id, text="Game ended. Type /new to create a new game!", parse_mode=telegram.ParseMode.HTML)
@@ -305,7 +339,7 @@ def stopGame(chat_data, bot_data, chat_id, chat_bot):
 CORRECT_LETTER_CORRECT_PLACE = 0
 CORRECT_LETTER_WRONG_PLACE = 1
 WRONG_LETTER_WRONG_PLACE = 2
-MAX_ATTEMPTS = 5
+MAX_ATTEMPTS = 6
 
 def enter(update, context):
 
@@ -339,7 +373,9 @@ def enter(update, context):
 
                     if (actualWord == word):
                         context.bot.send_message(chat_id=chat_id, text="Correct!! The word is " + actualWord, parse_mode=telegram.ParseMode.HTML)
-                        context.bot.send_message(chat_id=chat_id, text="Type /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+                        context.chat_data["scores"].append(str(context.chat_data["attempt"]))
+                        stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
+
                         return
 
                     listActualLetters = list(actualWord)
@@ -379,6 +415,10 @@ def enter(update, context):
 
                     if (context.chat_data["attempt"] == MAX_ATTEMPTS):
                         context.bot.send_message(chat_id=chat_id, text="Fifth attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+
+                        stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
+                        context.chat_data["scores"].append("❌")
+
                         return
 
             return
@@ -403,7 +443,7 @@ def main():
     # persistence_pickle = DictPersistence()
     # updater = telegram.ext.updater.Updater(bot=queued_bot, use_context=True, persistence=persistence_pickle)
 
-    updater = Updater(token=getToken(), use_context=True)
+    updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('new',new_game))
     # dispatcher.add_handler(CommandHandler('enter',enter))
@@ -411,10 +451,12 @@ def main():
     dispatcher.add_handler(CommandHandler('help',help))
     dispatcher.add_handler(CommandHandler('letters',letters_remaining))
     dispatcher.add_handler(CommandHandler('enter',enter))
+    dispatcher.add_handler(CommandHandler('scores',print_scores))
+    dispatcher.add_handler(CommandHandler('reset_scores',reset_scores))
 
     dispatcher.add_handler(CommandHandler('stop',stop))
-    # dispatcher.add_handler(CommandHandler('server',server_info))
-    # dispatcher.add_handler(CommandHandler('announce',announce))
+    dispatcher.add_handler(CommandHandler('server',server_info))
+    dispatcher.add_handler(CommandHandler('announce',announce))
 
     # dispatcher.add_handler(MessageHandler(Filters.text, enter))
 
