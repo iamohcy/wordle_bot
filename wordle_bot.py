@@ -414,7 +414,7 @@ def enter(update, context):
                     context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                     if (context.chat_data["attempt"] == MAX_ATTEMPTS):
-                        context.bot.send_message(chat_id=chat_id, text="Fifth attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+                        context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
 
                         stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                         context.chat_data["scores"].append("❌")
