@@ -369,6 +369,7 @@ def enter(update, context):
                     actualWord = context.chat_data["word"].upper()
 
                     if (actualWord == word):
+                        context.chat_data["attempt"] += 1
                         context.bot.send_message(chat_id=chat_id, text="Correct!! The word is " + actualWord, parse_mode=telegram.ParseMode.HTML)
                         context.chat_data["scores"].append(str(context.chat_data["attempt"]))
                         stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
