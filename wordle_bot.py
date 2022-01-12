@@ -365,61 +365,64 @@ def enter(update, context):
                     context.bot.send_message(chat_id=chat_id, text="Please ensure your word only has letters [A to Z]", parse_mode=telegram.ParseMode.HTML)
                 elif len(word) != 5:
                     context.bot.send_message(chat_id=chat_id, text="Please ensure your word has exactly 5 letters", parse_mode=telegram.ParseMode.HTML)
-                elif not (usDict.check(word) or ukDict.check(word)):
-                    context.bot.send_message(chat_id=chat_id, text="Please ensure your word is actually a word", parse_mode=telegram.ParseMode.HTML)
                 else:
                     actualWord = context.chat_data["word"].upper()
-                    context.chat_data["attempt"] += 1
 
                     if (actualWord == word):
                         context.bot.send_message(chat_id=chat_id, text="Correct!! The word is " + actualWord, parse_mode=telegram.ParseMode.HTML)
                         context.chat_data["scores"].append(str(context.chat_data["attempt"]))
                         stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
-
                         return
 
-                    listActualLetters = list(actualWord)
-                    listLetters = list(word)
-                    output = []
-                    wordFormatted = ""
+                    elif not (usDict.check(word) or ukDict.check(word)):
+                        context.bot.send_message(chat_id=chat_id, text="Please ensure your word is actually a word", parse_mode=telegram.ParseMode.HTML)
+                        return
 
-                    # Remove all letters that match exactly from pool of "right letter wrong place" letters first
-                    for i in range(len(word)):
-                        if word[i] == actualWord[i]:
-                            listActualLetters.remove(word[i])
+                    else:
+                        context.chat_data["attempt"] += 1
 
-                    for i in range(len(word)):
-                        # print(listActualLetters, word[i], actualWord[i])
-                        if word[i] == actualWord[i]:
-                            output.append((word[i], CORRECT_LETTER_CORRECT_PLACE))
-                            wordFormatted += "<b><u>" + word[i] + "</u></b>  "
-                        else:
-                            if word[i] in listActualLetters:
+                        listActualLetters = list(actualWord)
+                        listLetters = list(word)
+                        output = []
+                        wordFormatted = ""
+
+                        # Remove all letters that match exactly from pool of "right letter wrong place" letters first
+                        for i in range(len(word)):
+                            if word[i] == actualWord[i]:
                                 listActualLetters.remove(word[i])
-                                output.append((word[i], CORRECT_LETTER_WRONG_PLACE))
-                                wordFormatted += "<b>" + word[i] + "</b>  "
+
+                        for i in range(len(word)):
+                            # print(listActualLetters, word[i], actualWord[i])
+                            if word[i] == actualWord[i]:
+                                output.append((word[i], CORRECT_LETTER_CORRECT_PLACE))
+                                wordFormatted += "<b><u>" + word[i] + "</u></b>  "
                             else:
-                                output.append((word[i], WRONG_LETTER_WRONG_PLACE))
-                                wordFormatted += "<s>" + word[i] + "</s>  "
-                                if word[i] in context.chat_data["letters_remaining"]:
-                                    context.chat_data["letters_remaining"].remove(word[i])
+                                if word[i] in listActualLetters:
+                                    listActualLetters.remove(word[i])
+                                    output.append((word[i], CORRECT_LETTER_WRONG_PLACE))
+                                    wordFormatted += "<b>" + word[i] + "</b>  "
+                                else:
+                                    output.append((word[i], WRONG_LETTER_WRONG_PLACE))
+                                    wordFormatted += "<s>" + word[i] + "</s>  "
+                                    if word[i] in context.chat_data["letters_remaining"]:
+                                        context.chat_data["letters_remaining"].remove(word[i])
 
-                    wordFormatted = wordFormatted.rstrip()
-                    context.chat_data["attempt_words"].append(wordFormatted)
+                        wordFormatted = wordFormatted.rstrip()
+                        context.chat_data["attempt_words"].append(wordFormatted)
 
-                    message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
-                    for word_str in context.chat_data["attempt_words"]:
-                        message += word_str + "\n"
+                        message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
+                        for word_str in context.chat_data["attempt_words"]:
+                            message += word_str + "\n"
 
-                    context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+                        context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
-                    if (context.chat_data["attempt"] == MAX_ATTEMPTS):
-                        context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+                        if (context.chat_data["attempt"] == MAX_ATTEMPTS):
+                            context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
 
-                        stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
-                        context.chat_data["scores"].append("❌")
+                            stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
+                            context.chat_data["scores"].append("❌")
 
-                        return
+                            return
 
             return
         else:
