@@ -83,9 +83,10 @@ def new_game(update, context):
     context.bot_data["runningChatIds"].add(chat_id)
 
     totalNumGamesRunning = len(context.bot_data["runningChatIds"])
-    print("--------------------------")
-    print("TOTAL GAMES: %d" % totalNumGamesRunning)
-    print("--------------------------")
+    # print("--------------------------")
+    # print("TOTAL GROUPS: %d" % totalNumGamesRunning)
+    # print("TOTAL GAMES: %d" % totalNumGamesRunning)
+    # print("--------------------------")
     if totalNumGamesRunning >= MAX_ALLOWED_GAMES_RUNNING and (not isSuperUser):
         context.bot.send_message(chat_id=chat_id, text="Sorry! We have hit the server limit of %d games running concurrently. Please try again later!" % MAX_ALLOWED_GAMES_RUNNING, parse_mode=telegram.ParseMode.HTML)
         return
@@ -100,7 +101,7 @@ def new_game(update, context):
     if "scores" not in context.chat_data:
         context.chat_data["scores"] = []
 
-    context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
+    context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game\n\nEmail wavelengthbot@gmail.com if you have any feedback or bug reports!", parse_mode=telegram.ParseMode.HTML)
     context.bot.send_message(chat_id=chat_id, text="__ __ __ __ __", parse_mode=telegram.ParseMode.HTML)
 
     # if (DEBUG_MODE):
@@ -263,7 +264,7 @@ def server_info(update, context):
 
         if ("chat_debug_data" in bot_data):
             if messageOption == "info":
-                context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=userId, text="Number of groups: %d\nNumber of games running: %d" % (len(bot_data["chat_debug_data"]), len(context.bot_data["runningChatIds"])), parse_mode=telegram.ParseMode.HTML)
 
                 wordText = "Word Data\n---------------\n"
                 count = 0
