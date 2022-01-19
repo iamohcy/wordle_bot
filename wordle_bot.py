@@ -101,7 +101,7 @@ def new_game(update, context):
     if "scores" not in context.chat_data:
         context.chat_data["scores"] = []
 
-    context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game\n\nEmail wavelengthbot@gmail.com if you have any feedback or bug reports!", parse_mode=telegram.ParseMode.HTML)
+    context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
     context.bot.send_message(chat_id=chat_id, text="__ __ __ __ __", parse_mode=telegram.ParseMode.HTML)
 
     # if (DEBUG_MODE):
@@ -176,6 +176,8 @@ def help(update, context):
     message += "/scores: See which rounds you found the words in\n"
     message += "/reset_scores: Clear your round data\n"
     message += "/help: See game instructions\n"
+
+    message += "\nEmail wavelengthbot@gmail.com if you have any feedback or bug reports!\n"
     # message += "1) Create a group chat\n"
     # message += "2) Add the bot to your group chat\n"
     # message += "3) Type /new to begin a new game\n"
