@@ -134,7 +134,7 @@ def print_scores(update, context):
     if (chat_id > 0):
         chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
 
-    if len(context.chat_data["scores"]) == 0:
+    if ("scores" not in context.chat_data) or (len(context.chat_data["scores"]) == 0):
         message = "You have no historical round data!\n"
     else:
         message = "You managed to find the word on rounds: \n\n"
@@ -276,9 +276,11 @@ def server_info(update, context):
                     word = chat_datum["word"]
 
                     wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, word, chat_id)
+                    count += 1
                     if count > 50:
                         context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
                         wordText = ""
+                        count = 0
                 if wordText != "":
                     context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
             elif messageOption == "update_running":
@@ -291,9 +293,9 @@ def server_info(update, context):
                         context.bot_data["runningChatIds"].add(chat_id)
 
             elif messageOption == "self":
-                context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=userId, text="Number of groups: %d\nNumber of games running: %d" % (len(bot_data["chat_debug_data"]), len(context.bot_data["runningChatIds"])), parse_mode=telegram.ParseMode.HTML)
 
-                percentageText = "Percentage Data\n---------------\n"
+                percentageText = "Word Data\n---------------\n"
                 for chat_id in bot_data["chat_debug_data"]:
                     chat_datum = bot_data["chat_debug_data"][chat_id]
                     title = chat_datum["title"]
