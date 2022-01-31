@@ -152,9 +152,9 @@ def new_game(update, context):
     context.bot_data["runningChatIds"].add(chat_id)
 
     totalNumGamesRunning = len(context.bot_data["runningChatIds"])
-    # print("--------------------------")
-    # print("TOTAL GAMES: %d" % totalNumGamesRunning)
-    # print("--------------------------")
+    #print("--------------------------")
+    #print("TOTAL GAMES: %d" % totalNumGamesRunning)
+    #print("--------------------------")
     if totalNumGamesRunning >= MAX_ALLOWED_GAMES_RUNNING and (not isSuperUser):
         context.bot.send_message(chat_id=chat_id, text="Sorry! We have hit the server limit of %d games running concurrently. Please try again later!" % MAX_ALLOWED_GAMES_RUNNING, parse_mode=telegram.ParseMode.HTML)
         return
@@ -199,7 +199,7 @@ def print_scores(update, context):
     if (chat_id > 0):
         chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
 
-    if len(context.chat_data["scores"]) == 0:
+    if ("scores" not in context.chat_data) or (len(context.chat_data["scores"]) == 0):
         message = "You have no historical round data for regular Wordle mode!\n"
     else:
         message = "You managed to find the word on rounds: \n"
@@ -255,6 +255,8 @@ def help(update, context):
     message += "/scores: See which rounds you found the words in\n"
     message += "/reset_scores: Clear your round data\n"
     message += "/help: See game instructions\n"
+
+    message += "\nEmail wavelengthbot@gmail.com if you have any feedback or bug reports!\n"
     # message += "1) Create a group chat\n"
     # message += "2) Add the bot to your group chat\n"
     # message += "3) Type /new to begin a new game\n"
@@ -352,21 +354,21 @@ def server_info(update, context):
 
         if ("chat_debug_data" in bot_data):
             if messageOption == "info":
-                context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=userId, text="Number of groups: %d\nNumber of games running: %d" % (len(bot_data["chat_debug_data"]), len(context.bot_data["runningChatIds"])), parse_mode=telegram.ParseMode.HTML)
 
                 wordText = "Word Data\n---------------\n"
                 count = 0
                 for chat_id in bot_data["chat_debug_data"]:
-
                     if (chat_id == specificChatId or specificChatId >= 0):
-                        chat_datum = bot_data["chat_debug_data"][chat_id]
-                        title = chat_datum["title"]
+                        chat_datum = bot_data["chat_debug_data"][chat_id]                        title = chat_datum["title"]
                         word = chat_datum["word"]
 
                         wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, word, chat_id)
+                        count += 1
                         if count > 50:
                             context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
                             wordText = ""
+                            count = 0
                 if wordText != "":
                     context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
             elif messageOption == "update_running":
@@ -379,7 +381,7 @@ def server_info(update, context):
                         context.bot_data["runningChatIds"].add(chat_id)
 
             elif messageOption == "self":
-                context.bot.send_message(chat_id=userId, text="Number of games running: %d" % len(context.bot_data["runningChatIds"]), parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=userId, text="Number of groups: %d\nNumber of games running: %d" % (len(bot_data["chat_debug_data"]), len(context.bot_data["runningChatIds"])), parse_mode=telegram.ParseMode.HTML)
 
                 percentageText = "Word Data\n---------------\n"
                 for chat_id in bot_data["chat_debug_data"]:
