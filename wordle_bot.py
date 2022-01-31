@@ -241,8 +241,8 @@ def help(update, context):
     message = "Welcome to the (Unofficial) Telegram Bot Adaptation of <b>Wordle!</b>\n\n"
     message += "You have six guesses to guess a five letter word. Each time you make a guess, the letters will be formatted:\n\n"
 
-    message += "<b><u>A</u></b> if the letter is correct and in the right place\n"
-    message += "<b>B</b> if the letter is correct and in the wrong place\n"
+    message += "<u>A</u> if the letter is correct and in the right place\n"
+    message += "B if the letter is correct and in the wrong place\n"
     message += "<s>C</s> if the letter is not in the word\n\n"
 
 
@@ -360,7 +360,8 @@ def server_info(update, context):
                 count = 0
                 for chat_id in bot_data["chat_debug_data"]:
                     if (chat_id == specificChatId or specificChatId >= 0):
-                        chat_datum = bot_data["chat_debug_data"][chat_id]                        title = chat_datum["title"]
+                        chat_datum = bot_data["chat_debug_data"][chat_id]
+                        title = chat_datum["title"]
                         word = chat_datum["word"]
 
                         wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, word, chat_id)
@@ -470,12 +471,13 @@ def enterChinese(update, context):
             actualWordsChinese = context.chat_data["chengyu"][0]
             actualWords = context.chat_data["chengyu"][1]
             listAllActualLetters = list("".join(actualWords).strip())
-            print(listAllActualLetters)
+            numAllLetters = len(listAllActualLetters)
+            # print(listAllActualLetters)
 
             meaning = context.chat_data["chengyu"][2]
 
             numCorrect = 0
-            allOutput = [[] for i in range(NUM_WORDS)]
+            # allOutput = [[] for i in range(NUM_WORDS)]
             allWordsFormatted = []
 
             for wordIdx in range(NUM_WORDS):
@@ -490,7 +492,7 @@ def enterChinese(update, context):
                     return
                 else:
                     listLetters = list(word)
-                    output = allOutput[wordIdx]
+                    # output = allOutput[wordIdx]
                     wordFormatted = ""
 
                     allLettersCorrect = True
@@ -498,26 +500,24 @@ def enterChinese(update, context):
                     for charIdx in range(len(word)):
                         # print(listAllActualLetters, word[i], actualWord[i])
                         if word[charIdx] == actualWord[charIdx]:
-                            output.append((word[charIdx], CORRECT_LETTER_CORRECT_PLACE))
-                            wordFormatted += "<b><u>" + word[charIdx] + "</u></b>  "
+                            # output.append((word[charIdx], CORRECT_LETTER_CORRECT_PLACE))
+                            wordFormatted += ("<u>" + word[charIdx] + "</u>  ")
                         else:
                             allLettersCorrect = False
                             if word[charIdx] in listActualLetters:
                                 listActualLetters.remove(word[charIdx])
-                                output.append((word[charIdx], CORRECT_LETTER_WRONG_PLACE))
-                                wordFormatted += "<b>" + word[charIdx] + "</b>  "
+                                # output.append((word[charIdx], CORRECT_LETTER_WRONG_PLACE))
+                                wordFormatted += (word[charIdx] + "  ")
                             else:
-                                output.append((word[charIdx], WRONG_LETTER_WRONG_PLACE))
-                                wordFormatted += "<s>" + word[charIdx] + "</s>  "
+                                # output.append((word[charIdx], WRONG_LETTER_WRONG_PLACE))
+                                wordFormatted += ("<s>" + word[charIdx] + "</s>  ")
                                 if word[charIdx] in context.chat_data["letters_remaining_cy"][wordIdx]:
                                     context.chat_data["letters_remaining_cy"][wordIdx].remove(word[charIdx])
 
                     if allLettersCorrect:
                         numCorrect += 1
 
-                    wordFormatted = wordFormatted.rstrip()
                     allWordsFormatted.append(wordFormatted)
-
 
             answerKey = actualWordsChinese + " (" + " ".join(actualWords) + ")"
             if numCorrect == 4:
@@ -530,6 +530,7 @@ def enterChinese(update, context):
                 context.chat_data["attempt_words"].append("     ".join(allWordsFormatted))
 
                 message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + " (" + meaning + "):\n-------------------\n"
+                count = 0
                 for word_str in context.chat_data["attempt_words"]:
                     message += word_str + "\n"
 
@@ -578,7 +579,7 @@ def enterEnglish(update, context):
 
                 listActualLetters = list(actualWord)
                 listLetters = list(word)
-                output = []
+                # output = []
                 wordFormatted = ""
 
                 # Remove all letters that match exactly from pool of "right letter wrong place" letters first
@@ -589,15 +590,15 @@ def enterEnglish(update, context):
                 for i in range(len(word)):
                     # print(listActualLetters, word[i], actualWord[i])
                     if word[i] == actualWord[i]:
-                        output.append((word[i], CORRECT_LETTER_CORRECT_PLACE))
-                        wordFormatted += "<b><u>" + word[i] + "</u></b>  "
+                        # output.append((word[i], CORRECT_LETTER_CORRECT_PLACE))
+                        wordFormatted += "<u>" + word[i] + "</u>  "
                     else:
                         if word[i] in listActualLetters:
                             listActualLetters.remove(word[i])
-                            output.append((word[i], CORRECT_LETTER_WRONG_PLACE))
-                            wordFormatted += "<b>" + word[i] + "</b>  "
+                            # output.append((word[i], CORRECT_LETTER_WRONG_PLACE))
+                            wordFormatted += word[i] + "  "
                         else:
-                            output.append((word[i], WRONG_LETTER_WRONG_PLACE))
+                            # output.append((word[i], WRONG_LETTER_WRONG_PLACE))
                             wordFormatted += "<s>" + word[i] + "</s>  "
                             if word[i] in context.chat_data["letters_remaining"]:
                                 context.chat_data["letters_remaining"].remove(word[i])
