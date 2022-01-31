@@ -105,6 +105,8 @@ def new_cy_game(update, context):
 
     if "scores" not in context.chat_data:
         context.chat_data["scores"] = []
+    if "scores_cy" not in context.chat_data:
+        context.chat_data["scores_cy"] = []
 
     context.bot.send_message(chat_id=chat_id, text="New game (成语 Mode) has begun! Type /enter PINYIN to try a 成语 (e.g. /enter shou zhu dai tu), /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
 
@@ -169,6 +171,7 @@ def new_game(update, context):
 
     if "scores" not in context.chat_data:
         context.chat_data["scores"] = []
+    if "scores_cy" not in context.chat_data:
         context.chat_data["scores_cy"] = []
 
     context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
@@ -205,7 +208,7 @@ def print_scores(update, context):
         message = "You managed to find the word on rounds: \n"
         message += " | ".join(context.chat_data["scores"]) + "\n"
 
-    if len(context.chat_data["scores_cy"]) != 0:
+    if ("scores_cy" in context.chat_data) and (len(context.chat_data["scores_cy"]) != 0):
         message = "\n\nYou managed to find the 成语 on rounds: \n"
         message += " | ".join(context.chat_data["scores_cy"]) + "\n"
 
