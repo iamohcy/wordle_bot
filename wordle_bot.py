@@ -59,8 +59,8 @@ def new_cy_game(update, context):
 
     chat_id = update.message.chat_id
     userId = update.message.from_user.id
-
     isSuperUser = (userId == SUPERUSER_ID)
+
     chosenChengYu = getChengYu()
       # ["似懂非懂", ("si", "dong", "fei", "dong"), "To not fully understand"],
 
@@ -81,7 +81,13 @@ def new_cy_game(update, context):
     if "all_chat_data" not in context.bot_data:
         context.bot_data["all_chat_data"] = {}
 
-    context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":wordText, "hasSuperUser":isSuperUser}
+    if chat_id in context.bot_data["chat_debug_data"]:
+        context.bot_data["chat_debug_data"][chat_id]["title"] = update.message.chat.title
+        context.bot_data["chat_debug_data"][chat_id]["word"] = wordText
+        context.bot_data["chat_debug_data"][chat_id]["hasSuperUser"] |= isSuperUser
+    else:
+        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":wordText, "hasSuperUser":isSuperUser}
+
     context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
 
     context.bot_data["runningChatIds"].add(chat_id)
@@ -148,7 +154,13 @@ def new_game(update, context):
     if "all_chat_data" not in context.bot_data:
         context.bot_data["all_chat_data"] = {}
 
-    context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":chosenWord, "hasSuperUser":isSuperUser}
+    if chat_id in context.bot_data["chat_debug_data"]:
+        context.bot_data["chat_debug_data"][chat_id]["title"] = update.message.chat.title
+        context.bot_data["chat_debug_data"][chat_id]["word"] = chosenWord
+        context.bot_data["chat_debug_data"][chat_id]["hasSuperUser"] |= isSuperUser
+    else:
+        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":chosenWord, "hasSuperUser":isSuperUser}
+
     context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
 
     context.bot_data["runningChatIds"].add(chat_id)
@@ -386,7 +398,7 @@ def server_info(update, context):
 
             elif messageOption == "self":
                 context.bot.send_message(chat_id=userId, text="Number of groups: %d\nNumber of games running: %d" % (len(bot_data["chat_debug_data"]), len(context.bot_data["runningChatIds"])), parse_mode=telegram.ParseMode.HTML)
-
+                wordText = ""
                 percentageText = "Word Data\n---------------\n"
                 for chat_id in bot_data["chat_debug_data"]:
                     chat_datum = bot_data["chat_debug_data"][chat_id]
@@ -395,11 +407,12 @@ def server_info(update, context):
 
                     try:
                         if chat_datum["hasSuperUser"]:
-                            wordText += "<b>%s</b> chat at <b>%d%%</b>\n" % (title, word)
+                            wordText += "<b>%s</b> chat: <b>%s</b>\n" % (title, word)
                     except:
                         continue
 
-                context.bot.send_message(chat_id=userId, text=percentageText, parse_mode=telegram.ParseMode.HTML)
+                if len(wordText) > 0:
+                    context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
 
 def stop(update, context):
 
@@ -432,7 +445,7 @@ def stopGame(chat_data, bot_data, chat_id, chat_bot):
     chat_data["chengyu"] = ""
     chat_data["mode"] = ""
 
-    bot_data["chat_debug_data"][chat_id]["hasSuperUser"] = False
+    # bot_data["chat_debug_data"][chat_id]["hasSuperUser"] = False
     chat_bot.send_message(chat_id=chat_id, text="Game ended. Type /new to create a new standard Wordle game or /new_cy for 成语 mode!", parse_mode=telegram.ParseMode.HTML)
 
 CORRECT_LETTER_CORRECT_PLACE = 0
@@ -488,7 +501,7 @@ def enterChinese(update, context):
                 word = chengyuParsed[wordIdx].upper()
                 listActualLetters = list(actualWord)
 
-                print(actualWord, word)
+                # print(actualWord, word)
 
                 if len(word) != len(actualWord):
                     context.bot.send_message(chat_id=chat_id, text="Please ensure your pinyin matches the provided pinyin lengths:\n" + context.chat_data["underscores"], parse_mode=telegram.ParseMode.HTML)
