@@ -519,6 +519,7 @@ def enterChinese(update, context):
                         if word[charIdx] == actualWord[charIdx]:
                             # output.append((word[charIdx], CORRECT_LETTER_CORRECT_PLACE))
                             wordFormatted += ("<u>" + word[charIdx] + "</u>  ")
+                            listActualLetters.remove(word[charIdx])
                         else:
                             allLettersCorrect = False
                             if word[charIdx] in listActualLetters:
