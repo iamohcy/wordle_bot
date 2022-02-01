@@ -151,7 +151,7 @@ ALL_CHENG_YU = [
     ['刻苦耐劳', ('ke', 'ku', 'nai', 'lao'), 'To work hard and overcome adversity'],
     ['可想而知', ('ke', 'xiang', 'er', 'zhi'), 'As you can well imagine'],
     ['口若悬河', ('kou', 'ruo', 'xuan', 'he'), 'Very talkative'],
-    ['口是心非', ('kou', 'shi', 'xin', 'fei'), 'To be insincere'],
+    ['口是心非', ('kou', 'shi', 'xin', 'fei'), 'To not mean what you say'],
     ['苦口婆心', ('ku', 'kou', 'po', 'xin'), 'To persuade patiently'],
     ['夸大其词', ('kua', 'da', 'qi', 'ci'), 'Exaggerate'],
     ['脍炙人口', ('kuai', 'zhi', 'ren', 'kou'), 'Appealing to the masses'],
