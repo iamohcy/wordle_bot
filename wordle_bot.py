@@ -221,7 +221,7 @@ def print_scores(update, context):
         message += " | ".join(context.chat_data["scores"]) + "\n"
 
     if ("scores_cy" in context.chat_data) and (len(context.chat_data["scores_cy"]) != 0):
-        message = "\n\nYou managed to find the 成语 on rounds: \n"
+        message = "\nYou managed to find the 成语 on rounds: \n"
         message += " | ".join(context.chat_data["scores_cy"]) + "\n"
 
     context.bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
