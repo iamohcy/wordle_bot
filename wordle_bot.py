@@ -214,14 +214,15 @@ def print_scores(update, context):
     if (chat_id > 0):
         chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
 
+    message = ""
     if ("scores" not in context.chat_data) or (len(context.chat_data["scores"]) == 0):
-        message = "You have no historical round data for regular Wordle mode!\n"
+        message += "You have no historical round data for regular Wordle mode!\n"
     else:
-        message = "You managed to find the word on rounds: \n"
+        message += "You managed to find the word on rounds: \n"
         message += " | ".join(context.chat_data["scores"]) + "\n"
 
     if ("scores_cy" in context.chat_data) and (len(context.chat_data["scores_cy"]) != 0):
-        message = "\n\nYou managed to find the 成语 on rounds: \n"
+        message += "\n\nYou managed to find the 成语 on rounds: \n"
         message += " | ".join(context.chat_data["scores_cy"]) + "\n"
 
     context.bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
