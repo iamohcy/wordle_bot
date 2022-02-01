@@ -513,13 +513,18 @@ def enterChinese(update, context):
                     wordFormatted = ""
 
                     allLettersCorrect = True
+
+                    # Remove all letters that match exactly from pool of "right letter wrong place" letters first
+                    for charIdx in range(len(word)):
+                        if word[charIdx] == actualWord[charIdx]:
+                            listActualLetters.remove(word[charIdx])
+
                     # Remove all letters that match exactly from pool of "right letter wrong place" letters first
                     for charIdx in range(len(word)):
                         # print(listAllActualLetters, word[i], actualWord[i])
                         if word[charIdx] == actualWord[charIdx]:
                             # output.append((word[charIdx], CORRECT_LETTER_CORRECT_PLACE))
                             wordFormatted += ("<u>" + word[charIdx] + "</u>  ")
-                            listActualLetters.remove(word[charIdx])
                         else:
                             allLettersCorrect = False
                             if word[charIdx] in listActualLetters:
