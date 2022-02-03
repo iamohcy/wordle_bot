@@ -106,7 +106,7 @@ ALL_CHENG_YU = [
     ['海市蜃楼', ('hai', 'shi', 'shen', 'lou'), 'To build castles in the air; mirage'],
     ['含辛茹苦', ('han', 'xin', 'ru', 'ku'), 'To suffer bitter hardship'],
     ['好高骛远', ('hao', 'gao', 'wu', 'yuan'), 'To be overambitious'],
-    ['好逸恶劳', ('hao', 'yi', 'e', 'lao'), 'To love ease and hate work'],
+    ['好逸恶劳', ('hao', 'yi', 'wu', 'lao'), 'To love ease and hate work'],
     ['和睦共处', ('he', 'mu', 'gong', 'chu'), 'Peaceful coexistence'],
     ['厚德载物', ('hou', 'de', 'zai', 'wu'), 'To be of strong moral character'],
     ['狐假虎威', ('hu', 'jia', 'hu', 'wei'), 'To intimidate people with your connections'],
