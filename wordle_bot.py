@@ -356,7 +356,7 @@ def server_info(update, context):
     if len(messageOptionData) > 1:
         messageOption = messageOptionData[1]
 
-    if len(messageOptionData) > 2 and messageOption == "info":
+    if len(messageOptionData) > 2 and (messageOption == "info" or messageOption == "leave"):
         try:
             specificChatId = int(messageOptionData[2])
         except:
@@ -396,6 +396,23 @@ def server_info(update, context):
                     word = chat_datum["word"]
                     if len(word) >= 0:
                         context.bot_data["runningChatIds"].add(chat_id)
+
+# *****************************************************************************************
+            elif messageOption == "leave":
+                leftSuccess = False
+                title = "NIL"
+                if specificChatId < 0:
+                    for chat_id in bot_data["chat_debug_data"]:
+                        if chat_id == specificChatId:
+                            leftSuccess = context.bot.leave_chat(specificChatId, timeout=None, api_kwargs=None)
+                            title = bot_data["chat_debug_data"][chat_id]["title"]
+                            del bot_data["chat_debug_data"][specificChatId]
+                            break
+                    context.bot.send_message(chat_id=userId, text="Attempt to leave Chat %s (%d) = %s" % (title, specificChatId, leftSuccess), parse_mode=telegram.ParseMode.HTML)
+                else:
+                    context.bot.send_message(chat_id=userId, text="Chat ID %d not found" % specificChatId, parse_mode=telegram.ParseMode.HTML)
+
+# *****************************************************************************************
 
             elif messageOption == "self":
                 context.bot.send_message(chat_id=userId, text="Number of groups: %d\nNumber of games running: %d" % (len(bot_data["chat_debug_data"]), len(context.bot_data["runningChatIds"])), parse_mode=telegram.ParseMode.HTML)
