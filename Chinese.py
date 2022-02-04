@@ -380,7 +380,7 @@ ALL_CHENG_YU = [
     ['知行合一', ('zhi', 'xing', 'he', 'yi'), 'The union of practice and knowledge'],
     ['置之不理', ('zhi', 'zhi', 'bu', 'li'), 'To pay no heed to'],
     ['知足常乐', ('zhi', 'zu', 'chang', 'le'), 'To be content with what you have'],
-    ['重蹈覆辙', ('zhong', 'dao', 'fu', 'che'), 'To make the same mistakes'],
+    ['重蹈覆辙', ('chong', 'dao', 'fu', 'che'), 'To make the same mistakes'],
     ['重温旧梦', ('zhong', 'wen', 'jiu', 'meng'), 'To relive an old experience; relive an old dream'],
     ['忠言逆耳', ('zhong', 'yan', 'ni', 'er'), 'Good advice is often jarring'],
     ['装聋作哑', ('zhuang', 'long', 'zuo', 'ya'), 'To play deaf-mute'],
