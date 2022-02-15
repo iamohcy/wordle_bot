@@ -69,7 +69,7 @@ def new_quordle_game(update, context):
         newChosenWord = getWord()
         chosenWords.add(newChosenWord)
     chosenWords = list(chosenWords)
-    print(chosenWords)
+    # print(chosenWords)
     # chosenWord = "Crowd"
 
     if (chat_id > 0):
@@ -89,8 +89,9 @@ def new_quordle_game(update, context):
         context.bot_data["chat_debug_data"][chat_id]["title"] = update.message.chat.title
         context.bot_data["chat_debug_data"][chat_id]["chosenWords"] = chosenWords
         context.bot_data["chat_debug_data"][chat_id]["hasSuperUser"] |= isSuperUser
+        context.bot_data["chat_debug_data"][chat_id]["mode"] = "quordle"
     else:
-        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "chosenWords":chosenWords, "hasSuperUser":isSuperUser}
+        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "chosenWords":chosenWords, "hasSuperUser":isSuperUser, "mode":"quordle"}
 
     context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
 
@@ -166,8 +167,9 @@ def new_cy_game(update, context):
         context.bot_data["chat_debug_data"][chat_id]["title"] = update.message.chat.title
         context.bot_data["chat_debug_data"][chat_id]["word"] = wordText
         context.bot_data["chat_debug_data"][chat_id]["hasSuperUser"] |= isSuperUser
+        context.bot_data["chat_debug_data"][chat_id]["mode"] = "CY"
     else:
-        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":wordText, "hasSuperUser":isSuperUser}
+        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":wordText, "hasSuperUser":isSuperUser, "mode": "CY"}
 
     context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
 
@@ -241,8 +243,9 @@ def new_game(update, context):
         context.bot_data["chat_debug_data"][chat_id]["title"] = update.message.chat.title
         context.bot_data["chat_debug_data"][chat_id]["word"] = chosenWord
         context.bot_data["chat_debug_data"][chat_id]["hasSuperUser"] |= isSuperUser
+        context.bot_data["chat_debug_data"][chat_id]["mode"] = "ENG"
     else:
-        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":chosenWord, "hasSuperUser":isSuperUser}
+        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "word":chosenWord, "hasSuperUser":isSuperUser, "mode":"ENG"}
 
     context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
 
@@ -474,9 +477,12 @@ def server_info(update, context):
                     if (chat_id == specificChatId or specificChatId >= 0):
                         chat_datum = bot_data["chat_debug_data"][chat_id]
                         title = chat_datum["title"]
-                        word = chat_datum["word"]
-
-                        wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, word, chat_id)
+                        answer = "NIL"
+                        if chat_datum["title"]["mode"] == "quordle":
+                            answer = " | ".join(chat_datum["chosenWords"])
+                        else:
+                            answer = chat_datum["word"]
+                        wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, answer, chat_id)
                         count += 1
                         if count > 50:
                             context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
@@ -517,11 +523,15 @@ def server_info(update, context):
                 for chat_id in bot_data["chat_debug_data"]:
                     chat_datum = bot_data["chat_debug_data"][chat_id]
                     title = chat_datum["title"]
-                    word = chat_datum["word"]
+                    answer = "NIL"
+                    if chat_datum["title"]["mode"] == "quordle":
+                        answer = " | ".join(chat_datum["chosenWords"])
+                    else:
+                        answer = chat_datum["word"]
 
                     try:
                         if chat_datum["hasSuperUser"]:
-                            wordText += "<b>%s</b> chat: <b>%s</b>\n" % (title, word)
+                            wordText += "<b>%s</b> chat: <b>%s</b>\n" % (title, answer)
                     except:
                         continue
 
