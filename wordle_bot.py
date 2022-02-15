@@ -478,16 +478,17 @@ def server_info(update, context):
                         chat_datum = bot_data["chat_debug_data"][chat_id]
                         title = chat_datum["title"]
                         answer = "NIL"
-                        if chat_datum["title"]["mode"] == "quordle":
-                            answer = " | ".join(chat_datum["chosenWords"])
-                        else:
-                            answer = chat_datum["word"]
-                        wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, answer, chat_id)
-                        count += 1
-                        if count > 50:
-                            context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
-                            wordText = ""
-                            count = 0
+                        if "mode" in chat_datum:
+                            if chat_datum["mode"] == "quordle":
+                                answer = " | ".join(chat_datum["chosenWords"])
+                            else:
+                                answer = chat_datum["word"]
+                            wordText += "<b>%s</b> chat: <b>%s</b> [%d]\n" % (title, answer, chat_id)
+                            count += 1
+                            if count > 50:
+                                context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
+                                wordText = ""
+                                count = 0
                 if wordText != "":
                     context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
             elif messageOption == "update_running":
@@ -522,15 +523,15 @@ def server_info(update, context):
                 percentageText = "Word Data\n---------------\n"
                 for chat_id in bot_data["chat_debug_data"]:
                     chat_datum = bot_data["chat_debug_data"][chat_id]
-                    title = chat_datum["title"]
-                    answer = "NIL"
-                    if chat_datum["title"]["mode"] == "quordle":
-                        answer = " | ".join(chat_datum["chosenWords"])
-                    else:
-                        answer = chat_datum["word"]
-
                     try:
                         if chat_datum["hasSuperUser"]:
+                            title = chat_datum["title"]
+                            answer = "NIL"
+                            if "mode" in chat_datum:
+                                if chat_datum["mode"] == "quordle":
+                                    answer = " | ".join(chat_datum["chosenWords"])
+                                else:
+                                    answer = chat_datum["word"]
                             wordText += "<b>%s</b> chat: <b>%s</b>\n" % (title, answer)
                     except:
                         continue
@@ -927,8 +928,8 @@ def main():
     # persistence_pickle = DictPersistence()
     # updater = telegram.ext.updater.Updater(bot=queued_bot, use_context=True, persistence=persistence_pickle)
 
-    updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
-    # updater = Updater(token=getTestToken(), use_context=True, persistence=persistence_pickle)
+    # updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
+    updater = Updater(token=getTestToken(), use_context=True, persistence=persistence_pickle)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('new',new_game))
     dispatcher.add_handler(CommandHandler('new_cy',new_cy_game))
