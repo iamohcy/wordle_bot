@@ -776,6 +776,7 @@ def enterEnglishQuordle(update, context):
             else:
                 message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
                 ALL_CORRECT_PLACEHOLDER = "-------------------"
+                count = 0;
                 for wordIdx in range(NUM_CHOSEN_WORDS // 2):
                     attemptWordsLeft = context.chat_data["attempt_words"][wordIdx*2]
                     attemptWordsRight = context.chat_data["attempt_words"][wordIdx*2+1]
@@ -790,7 +791,13 @@ def enterEnglishQuordle(update, context):
                         else:
                             wordStrRight = ALL_CORRECT_PLACEHOLDER
                         message += wordStrLeft + "            " + wordStrRight + "\n"
+                        count += 2
                     message += "\n"
+
+                    if count >= 10:
+                        count = 0
+                        context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+                        message = ""
 
                 # If odd number, print the last word to the left
                 if (NUM_CHOSEN_WORDS % 2 == 1):
