@@ -910,7 +910,6 @@ ALL_WORDS = [
 "THEME",
 "THREE",
 "BRINK",
-"FRIES",
 "ALIBI",
 "ATONE",
 "CRATE",

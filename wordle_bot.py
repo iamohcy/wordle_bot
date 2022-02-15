@@ -108,6 +108,7 @@ def new_quordle_game(update, context):
     context.chat_data["gameStarted"] = True
     context.chat_data["mode"] = "quordle"
     context.chat_data["letters_remaining"] = [set("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(NUM_CHOSEN_WORDS)]
+    context.chat_data["letters_correct"] = [set() for i in range(NUM_CHOSEN_WORDS)]
     context.chat_data["chat_id"] = chat_id
     context.chat_data["chosenWords"] = chosenWords
     context.chat_data["foundWordInRound"] = [float('inf') for i in range(NUM_CHOSEN_WORDS)]
@@ -185,7 +186,8 @@ def new_cy_game(update, context):
 
     context.chat_data["gameStarted"] = True
     context.chat_data["mode"] = "CY"
-    context.chat_data["letters_remaining_cy"] = [set("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(len(chosenChengYu[1]))]
+    context.chat_data["letters_remaining"] = [set("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(len(chosenChengYu[1]))]
+    context.chat_data["letters_correct"] = [set() for i in range(len(chosenChengYu[1]))]
     context.chat_data["chat_id"] = chat_id
     context.chat_data["chengyu"] = chosenChengYu
     context.chat_data["attempt"] = 0
@@ -261,7 +263,8 @@ def new_game(update, context):
 
     context.chat_data["gameStarted"] = True
     context.chat_data["mode"] = "ENG"
-    context.chat_data["letters_remaining"] = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    context.chat_data["letters_remaining"] = [set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")]
+    context.chat_data["letters_correct"] = [set()]
     context.chat_data["chat_id"] = chat_id
     context.chat_data["word"] = chosenWord
     context.chat_data["attempt"] = 0
@@ -329,21 +332,25 @@ def letters_remaining(update, context):
     if (chat_id > 0):
         chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
 
-    message = "The letters remaining are: \n\n"
-    if context.chat_data["mode"] == "CY":
-        for i in range(len(context.chat_data["letters_remaining_cy"])):
-            lettersRemaining = list(context.chat_data["letters_remaining_cy"][i])
-            lettersRemaining.sort()
-            message += str(i) + ") " + " ".join(lettersRemaining) + "\n"
-    elif context.chat_data["mode"] == "quordle":
-        for i in range(len(context.chat_data["letters_remaining"])):
-            lettersRemaining = list(context.chat_data["letters_remaining"][i])
-            lettersRemaining.sort()
-            message += str(i) + ") " + " ".join(lettersRemaining) + "\n"
-    else:
-        lettersRemaining = list(context.chat_data["letters_remaining"])
+    message = "The [letters remaining] | <b>[seen letters]</b> are: \n\n"
+    if not isinstance(context.chat_data["letters_remaining"], list):
+        context.chat_data["letters_remaining"] = [context.chat_data["letters_remaining"]]
+
+    numWords = len(context.chat_data["letters_remaining"])
+    prefix = ""
+    for i in range(numWords):
+        if (numWords > 1):
+            prefix = "%d) " % (i+1)
+            if (context.chat_data["mode"]=="quordle") and (context.chat_data["foundWordInRound"][i] <= context.chat_data["attempt"]):
+                continue
+        lettersRemaining = list(context.chat_data["letters_remaining"][i])
         lettersRemaining.sort()
-        message += " ".join(lettersRemaining) + "\n"
+        lettersCorrect = list(context.chat_data["letters_correct"][i])
+        lettersCorrect.sort()
+        if (len(lettersCorrect) > 0):
+            message += prefix + " ".join(lettersRemaining) + "  |  " + "<b>" + " ".join(lettersCorrect) + "</b>\n"
+        else:
+            message += prefix + " ".join(lettersRemaining) + "\n"
 
 
     chat_bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
@@ -491,14 +498,12 @@ def server_info(update, context):
                                 count = 0
                 if wordText != "":
                     context.bot.send_message(chat_id=userId, text=wordText, parse_mode=telegram.ParseMode.HTML)
-            elif messageOption == "update_running":
-
+            elif messageOption == "refresh":
                 context.bot_data["runningChatIds"] = set()
-                for chat_id in bot_data["chat_debug_data"]:
-                    chat_datum = bot_data["chat_debug_data"][chat_id]
-                    word = chat_datum["word"]
-                    if len(word) >= 0:
-                        context.bot_data["runningChatIds"].add(chat_id)
+                for chat_id in context.bot_data["all_chat_data"]:
+                    chat_data = context.bot_data["all_chat_data"][chat_id]["chat_data"]
+                    chat_data["gameStarted"] = False
+                    context.bot_data["runningChatIds"].add(chat_id)
 
 # *****************************************************************************************
             elif messageOption == "leave":
@@ -641,6 +646,11 @@ def enterChinese(update, context):
                         if word[charIdx] == actualWord[charIdx]:
                             listActualLetters.remove(word[charIdx])
 
+                        if word[charIdx] in context.chat_data["letters_remaining"][wordIdx]:
+                            context.chat_data["letters_remaining"][wordIdx].remove(word[charIdx])
+                        if word[charIdx] in actualWord:
+                            context.chat_data["letters_correct"][wordIdx].add(word[charIdx])
+
                     # Remove all letters that match exactly from pool of "right letter wrong place" letters first
                     for charIdx in range(len(word)):
                         # print(listAllActualLetters, word[i], actualWord[i])
@@ -656,8 +666,8 @@ def enterChinese(update, context):
                             else:
                                 # output.append((word[charIdx], WRONG_LETTER_WRONG_PLACE))
                                 wordFormatted += ("<s>" + word[charIdx] + "</s>  ")
-                                if word[charIdx] in context.chat_data["letters_remaining_cy"][wordIdx]:
-                                    context.chat_data["letters_remaining_cy"][wordIdx].remove(word[charIdx])
+                                # if word[charIdx] in context.chat_data["letters_remaining"][wordIdx]:
+                                #     context.chat_data["letters_remaining"][wordIdx].remove(word[charIdx])
 
                     if allLettersCorrect:
                         numCorrect += 1
@@ -723,6 +733,9 @@ def enterEnglishQuordle(update, context):
             else:
                 context.chat_data["attempt"] += 1
                 for wordIdx in range(NUM_CHOSEN_WORDS):
+                    if (context.chat_data["foundWordInRound"][wordIdx] <= context.chat_data["attempt"]):
+                        continue
+
                     actualWord = actualWords[wordIdx].upper()
 
                     if (actualWord == word):
@@ -735,9 +748,14 @@ def enterEnglishQuordle(update, context):
                         wordFormatted = ""
 
                         # Remove all letters that match exactly from pool of "right letter wrong place" letters first
-                        for i in range(len(word)):
-                            if word[i] == actualWord[i]:
-                                listActualLetters.remove(word[i])
+                        for charIdx in range(len(word)):
+                            if word[charIdx] == actualWord[charIdx]:
+                                listActualLetters.remove(word[charIdx])
+
+                            if word[charIdx] in context.chat_data["letters_remaining"][wordIdx]:
+                                context.chat_data["letters_remaining"][wordIdx].remove(word[charIdx])
+                            if word[charIdx] in actualWord:
+                                context.chat_data["letters_correct"][wordIdx].add(word[charIdx])
 
                         for i in range(len(word)):
                             # print(listActualLetters, word[i], actualWord[i])
@@ -752,8 +770,8 @@ def enterEnglishQuordle(update, context):
                                 else:
                                     # output.append((word[i], WRONG_LETTER_WRONG_PLACE))
                                     wordFormatted += "<s>" + word[i] + "</s>  "
-                                    if word[i] in context.chat_data["letters_remaining"][wordIdx]:
-                                        context.chat_data["letters_remaining"][wordIdx].remove(word[i])
+                                    # if word[i] in context.chat_data["letters_remaining"][wordIdx]:
+                                    #     context.chat_data["letters_remaining"][wordIdx].remove(word[i])
 
                         wordFormatted = wordFormatted.rstrip()
 
@@ -851,9 +869,14 @@ def enterEnglish(update, context):
                 wordFormatted = ""
 
                 # Remove all letters that match exactly from pool of "right letter wrong place" letters first
-                for i in range(len(word)):
-                    if word[i] == actualWord[i]:
-                        listActualLetters.remove(word[i])
+                for charIdx in range(len(word)):
+                    if word[charIdx] == actualWord[charIdx]:
+                        listActualLetters.remove(word[charIdx])
+
+                    if word[charIdx] in context.chat_data["letters_remaining"][0]:
+                        context.chat_data["letters_remaining"][0].remove(word[charIdx])
+                    if word[charIdx] in actualWord:
+                        context.chat_data["letters_correct"][0].add(word[charIdx])
 
                 for i in range(len(word)):
                     # print(listActualLetters, word[i], actualWord[i])
@@ -868,8 +891,8 @@ def enterEnglish(update, context):
                         else:
                             # output.append((word[i], WRONG_LETTER_WRONG_PLACE))
                             wordFormatted += "<s>" + word[i] + "</s>  "
-                            if word[i] in context.chat_data["letters_remaining"]:
-                                context.chat_data["letters_remaining"].remove(word[i])
+                            # if word[i] in context.chat_data["letters_remaining"]:
+                            #     context.chat_data["letters_remaining"].remove(word[i])
 
                 wordFormatted = wordFormatted.rstrip()
                 context.chat_data["attempt_words"].append(wordFormatted)
@@ -877,7 +900,6 @@ def enterEnglish(update, context):
                 message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
                 for word_str in context.chat_data["attempt_words"]:
                     message += word_str + "\n"
-
                 context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                 if (context.chat_data["attempt"] == MAX_ATTEMPTS):
