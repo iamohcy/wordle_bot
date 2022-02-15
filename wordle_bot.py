@@ -775,7 +775,7 @@ def enterEnglishQuordle(update, context):
                 context.chat_data["scores_quordle"].append("❌")
             else:
                 message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
-                ALL_CORRECT_PLACEHOLDER = "---------------"
+                ALL_CORRECT_PLACEHOLDER = "-------------------"
                 for wordIdx in range(NUM_CHOSEN_WORDS // 2):
                     attemptWordsLeft = context.chat_data["attempt_words"][wordIdx*2]
                     attemptWordsRight = context.chat_data["attempt_words"][wordIdx*2+1]
