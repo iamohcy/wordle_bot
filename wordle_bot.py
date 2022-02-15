@@ -711,7 +711,6 @@ def enterEnglishQuordle(update, context):
             actualWords = context.chat_data["chosenWords"]
             NUM_CHOSEN_WORDS = len(actualWords)
             ACTUAL_MAX_ATTEMPTS = 5 + NUM_CHOSEN_WORDS
-            numCorrect = 0
 
             isReallyLegal = False
             for i in range(NUM_CHOSEN_WORDS):
@@ -729,7 +728,6 @@ def enterEnglishQuordle(update, context):
                     actualWord = actualWords[wordIdx].upper()
 
                     if (actualWord == word):
-                        numCorrect += 1
                         wordFormatted = "<u>" + "  ".join(list(actualWord)) + "</u>"
                         context.chat_data["foundWordInRound"][wordIdx] = context.chat_data["attempt"]
                     else:
@@ -763,6 +761,7 @@ def enterEnglishQuordle(update, context):
 
                     context.chat_data["attempt_words"][wordIdx].append(wordFormatted)
 
+            numCorrect = sum(x <= ACTUAL_MAX_ATTEMPTS for x in context.chat_data["foundWordInRound"])
             if (numCorrect == NUM_CHOSEN_WORDS):
                 context.chat_data["attempt"] += 1
                 context.bot.send_message(chat_id=chat_id, text="Correct!! The words are " + actualWord, parse_mode=telegram.ParseMode.HTML)
