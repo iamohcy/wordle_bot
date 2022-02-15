@@ -109,6 +109,7 @@ def new_quordle_game(update, context):
     context.chat_data["letters_remaining"] = [set("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(NUM_CHOSEN_WORDS)]
     context.chat_data["chat_id"] = chat_id
     context.chat_data["chosenWords"] = chosenWords
+    context.chat_data["foundWordInRound"] = [float('inf') for i in range(NUM_CHOSEN_WORDS)]
     context.chat_data["attempt"] = 0
     context.chat_data["attempt_words"] = [[] for i in range(NUM_CHOSEN_WORDS)]
 
@@ -718,7 +719,8 @@ def enterEnglishQuordle(update, context):
 
                     if (actualWord == word):
                         numCorrect += 1
-                        wordFormatted = "<b>" + "  ".join(list(actualWord)) + "</b>"
+                        wordFormatted = "<u>" + "  ".join(list(actualWord)) + "</u>"
+                        context.chat_data["foundWordInRound"][wordIdx] = context.chat_data["attempt"]
                     else:
                         listActualLetters = list(actualWord)
                         listLetters = list(word)
@@ -752,7 +754,7 @@ def enterEnglishQuordle(update, context):
 
             if (numCorrect == NUM_CHOSEN_WORDS):
                 context.chat_data["attempt"] += 1
-                context.bot.send_message(chat_id=chat_id, text="Correct!! The word is " + actualWord, parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=chat_id, text="Correct!! The words are " + actualWord, parse_mode=telegram.ParseMode.HTML)
                 context.chat_data["scores_quordle"].append(str(context.chat_data["attempt"]))
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 return
@@ -768,12 +770,12 @@ def enterEnglishQuordle(update, context):
                     attemptWordsLeft = context.chat_data["attempt_words"][wordIdx*2]
                     attemptWordsRight = context.chat_data["attempt_words"][wordIdx*2+1]
                     for wordAttemptIdx in range(context.chat_data["attempt"]):
-                        if wordAttemptIdx < len(attemptWordsLeft):
+                        if wordAttemptIdx < context.chat_data["foundWordInRound"][wordIdx*2]:
                             wordStrLeft = attemptWordsLeft[wordAttemptIdx]
                         else:
                             wordStrLeft = ALL_CORRECT_PLACEHOLDER
 
-                        if wordAttemptIdx < len(attemptWordsRight):
+                        if wordAttemptIdx < context.chat_data["foundWordInRound"][wordIdx*2+1]:
                             wordStrRight = attemptWordsRight[wordAttemptIdx]
                         else:
                             wordStrRight = ALL_CORRECT_PLACEHOLDER
@@ -784,7 +786,7 @@ def enterEnglishQuordle(update, context):
                 if (NUM_CHOSEN_WORDS % 2 == 1):
                     attemptWords = context.chat_data["attempt_words"][-1]
                     for wordAttemptIdx in range(context.chat_data["attempt"]):
-                        if wordAttemptIdx < len(attemptWords):
+                        if wordAttemptIdx < context.chat_data["foundWordInRound"][-1]:
                             wordStr = attemptWords[wordAttemptIdx]
                         else:
                             wordStrLeft = ALL_CORRECT_PLACEHOLDER
@@ -908,8 +910,8 @@ def main():
     # persistence_pickle = DictPersistence()
     # updater = telegram.ext.updater.Updater(bot=queued_bot, use_context=True, persistence=persistence_pickle)
 
-    # updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
-    updater = Updater(token=getTestToken(), use_context=True, persistence=persistence_pickle)
+    updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
+    # updater = Updater(token=getTestToken(), use_context=True, persistence=persistence_pickle)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('new',new_game))
     dispatcher.add_handler(CommandHandler('new_cy',new_cy_game))
