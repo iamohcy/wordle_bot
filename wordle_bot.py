@@ -64,6 +64,18 @@ def new_quordle_game(update, context):
 
     isSuperUser = (userId == SUPERUSER_ID)
 
+    modeText = update.message.text
+    modeParams = modeText.split()
+    try:
+        if len(modeParams) == 3:
+            codeword = modeParams[1]
+            numWords = int(modeParams[2])
+            # Experimental mode
+            if codeword == "ohcy" and numWords <= 20:
+                NUM_CHOSEN_WORDS = numWords
+    except:
+        pass
+
     chosenWords = set()
     while (len(chosenWords) < NUM_CHOSEN_WORDS):
         newChosenWord = getWord()
@@ -783,15 +795,13 @@ def enterEnglishQuordle(update, context):
                 context.chat_data["scores_quordle"].append(str(context.chat_data["attempt"]))
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 return
-            elif (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS):
-                context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\nType /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
-
-                stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
-                context.chat_data["scores_quordle"].append("❌")
             else:
                 message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
                 ALL_CORRECT_PLACEHOLDER = "-------------------"
-                count = 0;
+                count = 0
+
+                wordIdx = 0
+                # while wordIdx < range(NUM_CHOSEN_WORDS):
                 for wordIdx in range(NUM_CHOSEN_WORDS // 2):
                     attemptWordsLeft = context.chat_data["attempt_words"][wordIdx*2]
                     attemptWordsRight = context.chat_data["attempt_words"][wordIdx*2+1]
@@ -826,6 +836,12 @@ def enterEnglishQuordle(update, context):
 
                 if len(message) > 0:
                     context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+
+                if (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS):
+                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\nType /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
+
+                    stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
+                    context.chat_data["scores_quordle"].append("❌")
 
 def enterEnglish(update, context):
 
