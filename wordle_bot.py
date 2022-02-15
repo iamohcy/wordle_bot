@@ -121,7 +121,7 @@ def new_quordle_game(update, context):
     if "scores_quordle" not in context.chat_data:
         context.chat_data["scores_quordle"] = []
 
-    context.bot.send_message(chat_id=chat_id, text="New game (quordle mode) has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
+    context.bot.send_message(chat_id=chat_id, text="New game (quordle mode) has begun! Enjoy the extra challenge of solving 4 words over 9 rounds. Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
 
     formatStr = ""
     baseFormatStr = "__ __ __ __ __"
@@ -553,9 +553,8 @@ def stopGame(chat_data, bot_data, chat_id, chat_bot):
         chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
         return
 
-
     if ("gameStarted" not in chat_data):
-        chat_bot.send_message(chat_id=chat_id, text="Type /new to create a new game!", parse_mode=telegram.ParseMode.HTML)
+        chat_bot.send_message(chat_id=chat_id, text="Type /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
         return
 
     if chat_id in bot_data["runningChatIds"]:
@@ -571,14 +570,13 @@ def stopGame(chat_data, bot_data, chat_id, chat_bot):
     chat_data["mode"] = ""
 
     # bot_data["chat_debug_data"][chat_id]["hasSuperUser"] = False
-    chat_bot.send_message(chat_id=chat_id, text="Game ended. Type /new to create a new standard Wordle game or /new_cy for 成语 mode!", parse_mode=telegram.ParseMode.HTML)
+    chat_bot.send_message(chat_id=chat_id, text="Game ended. Type /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
 
 CORRECT_LETTER_CORRECT_PLACE = 0
 CORRECT_LETTER_WRONG_PLACE = 1
 WRONG_LETTER_WRONG_PLACE = 2
 MAX_ATTEMPTS = 6
 MAX_CY_ATTEMPTS = 6
-
 
 def enterChinese(update, context):
 
@@ -764,12 +762,12 @@ def enterEnglishQuordle(update, context):
             numCorrect = sum(x <= ACTUAL_MAX_ATTEMPTS for x in context.chat_data["foundWordInRound"])
             if (numCorrect == NUM_CHOSEN_WORDS):
                 context.chat_data["attempt"] += 1
-                context.bot.send_message(chat_id=chat_id, text="Correct!! The words are " + actualWord, parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=chat_id, text="Correct!! The words are " + " | ".join(actualWords), parse_mode=telegram.ParseMode.HTML)
                 context.chat_data["scores_quordle"].append(str(context.chat_data["attempt"]))
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 return
             elif (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS):
-                context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+                context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\nType /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
 
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 context.chat_data["scores_quordle"].append("❌")
@@ -809,7 +807,8 @@ def enterEnglishQuordle(update, context):
                             wordStrLeft = ALL_CORRECT_PLACEHOLDER
                         message += wordStr + "\n"
 
-                context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+                if len(message) > 0:
+                    context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
 def enterEnglish(update, context):
 
@@ -882,7 +881,7 @@ def enterEnglish(update, context):
                 context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                 if (context.chat_data["attempt"] == MAX_ATTEMPTS):
-                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\nType /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
 
                     stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                     context.chat_data["scores"].append("❌")
@@ -909,7 +908,7 @@ def enter(update, context):
             else:
                 enterEnglish(update,context)
         else:
-            context.bot.send_message(chat_id=chat_id, text="Type /new to create a new game!", parse_mode=telegram.ParseMode.HTML)
+            context.bot.send_message(chat_id=chat_id, text="Type /new to create a new standard Wordle game, /new_cy for 成语 mode or /new_q for an extra challenging Quordle game!", parse_mode=telegram.ParseMode.HTML)
 
     # Guarantees that this is private chat with player, rather than a group chat
     elif (chat_id > 0):
