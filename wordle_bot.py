@@ -53,6 +53,86 @@ class MQBot(telegram.bot.Bot):
         except:
             raise
 
+def new_quordle_game(update, context):
+    if (update.message == None):
+        return
+
+    NUM_CHOSEN_WORDS = 4
+
+    chat_id = update.message.chat_id
+    userId = update.message.from_user.id
+
+    isSuperUser = (userId == SUPERUSER_ID)
+
+    chosenWords = set()
+    while (len(chosenWords) < NUM_CHOSEN_WORDS):
+        newChosenWord = getWord()
+        chosenWords.add(newChosenWord)
+    chosenWords = list(chosenWords)
+    print(chosenWords)
+    # chosenWord = "Crowd"
+
+    if (chat_id > 0):
+        context.bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel! Create a group chat and add this bot to it to play!", parse_mode=telegram.ParseMode.HTML)
+        return
+
+    if "runningChatIds" not in context.bot_data:
+        context.bot_data["runningChatIds"] = set()
+
+    if "chat_debug_data" not in context.bot_data:
+        context.bot_data["chat_debug_data"] = {}
+
+    if "all_chat_data" not in context.bot_data:
+        context.bot_data["all_chat_data"] = {}
+
+    if chat_id in context.bot_data["chat_debug_data"]:
+        context.bot_data["chat_debug_data"][chat_id]["title"] = update.message.chat.title
+        context.bot_data["chat_debug_data"][chat_id]["chosenWords"] = chosenWords
+        context.bot_data["chat_debug_data"][chat_id]["hasSuperUser"] |= isSuperUser
+    else:
+        context.bot_data["chat_debug_data"][chat_id] = {"title":update.message.chat.title, "chosenWords":chosenWords, "hasSuperUser":isSuperUser}
+
+    context.bot_data["all_chat_data"][chat_id] = {"chat_data":context.chat_data, "chat_bot":context.bot}
+
+    context.bot_data["runningChatIds"].add(chat_id)
+
+    totalNumGamesRunning = len(context.bot_data["runningChatIds"])
+    #print("--------------------------")
+    #print("TOTAL GAMES: %d" % totalNumGamesRunning)
+    #print("--------------------------")
+    if totalNumGamesRunning >= MAX_ALLOWED_GAMES_RUNNING and (not isSuperUser):
+        context.bot.send_message(chat_id=chat_id, text="Sorry! We have hit the server limit of %d games running concurrently. Please try again later!" % MAX_ALLOWED_GAMES_RUNNING, parse_mode=telegram.ParseMode.HTML)
+        return
+
+    context.chat_data["gameStarted"] = True
+    context.chat_data["mode"] = "quordle"
+    context.chat_data["letters_remaining"] = [set("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(NUM_CHOSEN_WORDS)]
+    context.chat_data["chat_id"] = chat_id
+    context.chat_data["chosenWords"] = chosenWords
+    context.chat_data["attempt"] = 0
+    context.chat_data["attempt_words"] = [[] for i in range(NUM_CHOSEN_WORDS)]
+
+    if "scores" not in context.chat_data:
+        context.chat_data["scores"] = []
+    if "scores_cy" not in context.chat_data:
+        context.chat_data["scores_cy"] = []
+    if "scores_quordle" not in context.chat_data:
+        context.chat_data["scores_quordle"] = []
+
+    context.bot.send_message(chat_id=chat_id, text="New game (quordle mode) has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
+
+    formatStr = ""
+    baseFormatStr = "__ __ __ __ __"
+    for i in range(NUM_CHOSEN_WORDS // 2):
+        formatStr += baseFormatStr + "    " + baseFormatStr + "\n\n"
+    if (NUM_CHOSEN_WORDS % 2) > 0:
+        formatStr += baseFormatStr
+    else:
+        formatStr.rstrip("\n")
+
+    context.bot.send_message(chat_id=chat_id, text=formatStr, parse_mode=telegram.ParseMode.HTML)
+
+
 def new_cy_game(update, context):
     if (update.message == None):
         return
@@ -113,6 +193,8 @@ def new_cy_game(update, context):
         context.chat_data["scores"] = []
     if "scores_cy" not in context.chat_data:
         context.chat_data["scores_cy"] = []
+    if "scores_quordle" not in context.chat_data:
+        context.chat_data["scores_quordle"] = []
 
     context.bot.send_message(chat_id=chat_id, text="New game (成语 Mode) has begun! Type /enter PINYIN to try a 成语 (e.g. /enter shou zhu dai tu), /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
 
@@ -185,6 +267,8 @@ def new_game(update, context):
         context.chat_data["scores"] = []
     if "scores_cy" not in context.chat_data:
         context.chat_data["scores_cy"] = []
+    if "scores_quordle" not in context.chat_data:
+        context.chat_data["scores_quordle"] = []
 
     context.bot.send_message(chat_id=chat_id, text="New game has begun! Type /enter [WORD] to try a word, /help to see what the different font formats mean, /letters to see remaining letters and /stop to end an existing game", parse_mode=telegram.ParseMode.HTML)
     context.bot.send_message(chat_id=chat_id, text="__ __ __ __ __", parse_mode=telegram.ParseMode.HTML)
@@ -202,6 +286,7 @@ def reset_scores(update, context):
     else:
         context.chat_data["scores"] = []
         context.chat_data["scores_cy"] = []
+        context.chat_data["scores_quordle"] = []
         chat_bot.send_message(chat_id=chat_id, text="Round data has been reset!", parse_mode=telegram.ParseMode.HTML)
 
 def print_scores(update, context):
@@ -220,6 +305,10 @@ def print_scores(update, context):
     else:
         message += "You managed to find the word on rounds: \n"
         message += " | ".join(context.chat_data["scores"]) + "\n"
+
+    if ("scores_quordle" in context.chat_data) and (len(context.chat_data["scores_quordle"]) != 0):
+        message += "\nYou managed to solve the quordle on rounds: \n"
+        message += " | ".join(context.chat_data["scores_quordle"]) + "\n"
 
     if ("scores_cy" in context.chat_data) and (len(context.chat_data["scores_cy"]) != 0):
         message += "\nYou managed to find the 成语 on rounds: \n"
@@ -240,6 +329,11 @@ def letters_remaining(update, context):
     if context.chat_data["mode"] == "CY":
         for i in range(len(context.chat_data["letters_remaining_cy"])):
             lettersRemaining = list(context.chat_data["letters_remaining_cy"][i])
+            lettersRemaining.sort()
+            message += str(i) + ") " + " ".join(lettersRemaining) + "\n"
+    elif context.chat_data["mode"] == "quordle":
+        for i in range(len(context.chat_data["letters_remaining"])):
+            lettersRemaining = list(context.chat_data["letters_remaining"][i])
             lettersRemaining.sort()
             message += str(i) + ") " + " ".join(lettersRemaining) + "\n"
     else:
@@ -265,6 +359,7 @@ def help(update, context):
     message += "Commands:\n"
     message += "/new: Make new game\n"
     message += "/new_cy: Make new 成语 game\n"
+    message += "/new_q: Make new quordle game\n"
     message += "/stop: Stop current game\n"
     message += "/enter: Enter a word attempt\n"
     message += "/letters: See any remaining letters\n"
@@ -582,6 +677,121 @@ def enterChinese(update, context):
                     stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                     context.chat_data["scores_cy"].append("❌")
 
+def enterEnglishQuordle(update, context):
+
+    chat_data = context.chat_data
+    user_data = context.user_data
+    chat_id = update.message.chat_id
+    userId = update.message.from_user.id
+    msgText = update.message.text
+
+    words = msgText.split()
+    if len(words) != 2:
+        context.bot.send_message(chat_id=chat_id, text="Please enter only a single word", parse_mode=telegram.ParseMode.HTML)
+    else:
+        word = words[1].upper()
+
+        if not word.isalpha():
+            context.bot.send_message(chat_id=chat_id, text="Please ensure your word only has letters [A to Z]", parse_mode=telegram.ParseMode.HTML)
+        elif len(word) != 5:
+            context.bot.send_message(chat_id=chat_id, text="Please ensure your word has exactly 5 letters", parse_mode=telegram.ParseMode.HTML)
+        else:
+            actualWords = context.chat_data["chosenWords"]
+            NUM_CHOSEN_WORDS = len(actualWords)
+            ACTUAL_MAX_ATTEMPTS = 5 + NUM_CHOSEN_WORDS
+            numCorrect = 0
+
+            isReallyLegal = False
+            for i in range(NUM_CHOSEN_WORDS):
+                actualWord = actualWords[i].upper()
+                if (actualWord == word):
+                    isReallyLegal = True
+                    break
+
+            if not (usDict.check(word) or ukDict.check(word) or isReallyLegal):
+                context.bot.send_message(chat_id=chat_id, text="Please ensure your word is actually a word", parse_mode=telegram.ParseMode.HTML)
+                return
+            else:
+                context.chat_data["attempt"] += 1
+                for wordIdx in range(NUM_CHOSEN_WORDS):
+                    actualWord = actualWords[wordIdx].upper()
+
+                    if (actualWord == word):
+                        numCorrect += 1
+                        wordFormatted = "<b>" + "  ".join(list(actualWord)) + "</b>"
+                    else:
+                        listActualLetters = list(actualWord)
+                        listLetters = list(word)
+                        # output = []
+                        wordFormatted = ""
+
+                        # Remove all letters that match exactly from pool of "right letter wrong place" letters first
+                        for i in range(len(word)):
+                            if word[i] == actualWord[i]:
+                                listActualLetters.remove(word[i])
+
+                        for i in range(len(word)):
+                            # print(listActualLetters, word[i], actualWord[i])
+                            if word[i] == actualWord[i]:
+                                # output.append((word[i], CORRECT_LETTER_CORRECT_PLACE))
+                                wordFormatted += "<u>" + word[i] + "</u>  "
+                            else:
+                                if word[i] in listActualLetters:
+                                    listActualLetters.remove(word[i])
+                                    # output.append((word[i], CORRECT_LETTER_WRONG_PLACE))
+                                    wordFormatted += word[i] + "  "
+                                else:
+                                    # output.append((word[i], WRONG_LETTER_WRONG_PLACE))
+                                    wordFormatted += "<s>" + word[i] + "</s>  "
+                                    if word[i] in context.chat_data["letters_remaining"][wordIdx]:
+                                        context.chat_data["letters_remaining"][wordIdx].remove(word[i])
+
+                        wordFormatted = wordFormatted.rstrip()
+
+                    context.chat_data["attempt_words"][wordIdx].append(wordFormatted)
+
+            if (numCorrect == NUM_CHOSEN_WORDS):
+                context.chat_data["attempt"] += 1
+                context.bot.send_message(chat_id=chat_id, text="Correct!! The word is " + actualWord, parse_mode=telegram.ParseMode.HTML)
+                context.chat_data["scores_quordle"].append(str(context.chat_data["attempt"]))
+                stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
+                return
+            elif (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS):
+                context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\nType /new to begin a new round.", parse_mode=telegram.ParseMode.HTML)
+
+                stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
+                context.chat_data["scores_quordle"].append("❌")
+            else:
+                message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
+                ALL_CORRECT_PLACEHOLDER = "---------------"
+                for wordIdx in range(NUM_CHOSEN_WORDS // 2):
+                    attemptWordsLeft = context.chat_data["attempt_words"][wordIdx*2]
+                    attemptWordsRight = context.chat_data["attempt_words"][wordIdx*2+1]
+                    for wordAttemptIdx in range(context.chat_data["attempt"]):
+                        if wordAttemptIdx < len(attemptWordsLeft):
+                            wordStrLeft = attemptWordsLeft[wordAttemptIdx]
+                        else:
+                            wordStrLeft = ALL_CORRECT_PLACEHOLDER
+
+                        if wordAttemptIdx < len(attemptWordsRight):
+                            wordStrRight = attemptWordsRight[wordAttemptIdx]
+                        else:
+                            wordStrRight = ALL_CORRECT_PLACEHOLDER
+                        message += wordStrLeft + "            " + wordStrRight + "\n"
+                    message += "\n"
+
+                # If odd number, print the last word to the left
+                if (NUM_CHOSEN_WORDS % 2 == 1):
+                    attemptWords = context.chat_data["attempt_words"][-1]
+                    for wordAttemptIdx in range(context.chat_data["attempt"]):
+                        if wordAttemptIdx < len(attemptWords):
+                            wordStr = attemptWords[wordAttemptIdx]
+                        else:
+                            wordStrLeft = ALL_CORRECT_PLACEHOLDER
+                        message += wordStr + "\n"
+
+                context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+
 def enterEnglish(update, context):
 
     chat_data = context.chat_data
@@ -675,6 +885,8 @@ def enter(update, context):
         if ("gameStarted" in chat_data) and (chat_data["gameStarted"]):
             if (context.chat_data["mode"] == "CY"):
                 enterChinese(update,context)
+            elif (context.chat_data["mode"] == "quordle"):
+                enterEnglishQuordle(update,context)
             else:
                 enterEnglish(update,context)
         else:
@@ -696,11 +908,12 @@ def main():
     # persistence_pickle = DictPersistence()
     # updater = telegram.ext.updater.Updater(bot=queued_bot, use_context=True, persistence=persistence_pickle)
 
-    updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
-    # updater = Updater(token=getTestToken(), use_context=True, persistence=persistence_pickle)
+    # updater = Updater(token=getToken(), use_context=True, persistence=persistence_pickle)
+    updater = Updater(token=getTestToken(), use_context=True, persistence=persistence_pickle)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('new',new_game))
     dispatcher.add_handler(CommandHandler('new_cy',new_cy_game))
+    dispatcher.add_handler(CommandHandler('new_q',new_quordle_game))
     # dispatcher.add_handler(CommandHandler('enter',enter))
     # dispatcher.add_handler(CommandHandler('e',enter))
     dispatcher.add_handler(CommandHandler('help',help))
