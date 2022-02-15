@@ -779,7 +779,6 @@ def enterEnglishQuordle(update, context):
 
             numCorrect = sum(x <= ACTUAL_MAX_ATTEMPTS for x in context.chat_data["foundWordInRound"])
             if (numCorrect == NUM_CHOSEN_WORDS):
-                context.chat_data["attempt"] += 1
                 context.bot.send_message(chat_id=chat_id, text="Correct!! The words are " + " | ".join(actualWords), parse_mode=telegram.ParseMode.HTML)
                 context.chat_data["scores_quordle"].append(str(context.chat_data["attempt"]))
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
