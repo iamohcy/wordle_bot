@@ -339,15 +339,15 @@ def reset_scores(update, context):
     else:
         if "do_reset" in context.chat_data:
             if context.chat_data["do_reset"] == False:
+                chat_bot.send_message(chat_id=chat_id, text="Are you sure you want to reset ALL your score data? To confirm, just send the /reset_scores command again.", parse_mode=telegram.ParseMode.HTML)
+                context.chat_data["do_reset"] = True
+            else:
                 context.chat_data["scores"] = []
                 context.chat_data["scores_cy"] = []
                 context.chat_data["scores_quordle"] = []
                 context.chat_data["scores_nwordle"] = []
                 context.chat_data["do_reset"] = False
-                chat_bot.send_message(chat_id=chat_id, text="Are you sure you want to reset ALL your score data? To confirm, just send the /reset_scores command again.", parse_mode=telegram.ParseMode.HTML)
-            else:
                 chat_bot.send_message(chat_id=chat_id, text="Round data has been reset!", parse_mode=telegram.ParseMode.HTML)
-                context.chat_data["do_reset"] = True
         else:
             context.chat_data["do_reset"] = True
 
@@ -363,19 +363,24 @@ def print_scores(update, context):
         chat_bot.send_message(chat_id=chat_id, text="This command can only be sent in a group channel!", parse_mode=telegram.ParseMode.HTML)
 
     message = ""
-    if ("scores" not in context.chat_data) or (len(context.chat_data["scores"]) == 0):
-        message += "You have no historical round data for regular Wordle mode!\n"
-    else:
-        message += "You managed to find the word on rounds: \n"
+    if ("scores" in context.chat_data) and (len(context.chat_data["scores"]) != 0):
+        message += "You managed to solve the Wordle on rounds: \n"
         message += " | ".join(context.chat_data["scores"]) + "\n"
 
     if ("scores_quordle" in context.chat_data) and (len(context.chat_data["scores_quordle"]) != 0):
         message += "\nYou managed to solve the quordle on rounds: \n"
         message += " | ".join(context.chat_data["scores_quordle"]) + "\n"
 
+    if ("scores_nwordle" in context.chat_data) and (len(context.chat_data["scores_nwordle"]) != 0):
+        message += "\nYou managed to solve the N-Wordle on (format - num_words:solved_round): \n"
+        message += " | ".join(context.chat_data["scores_nwordle"]) + "\n"
+
     if ("scores_cy" in context.chat_data) and (len(context.chat_data["scores_cy"]) != 0):
         message += "\nYou managed to find the 成语 on rounds: \n"
         message += " | ".join(context.chat_data["scores_cy"]) + "\n"
+
+    if len(message) == 0:
+        message += "You have no historical round data!\n"
 
     context.bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
@@ -431,14 +436,13 @@ def help(update, context):
     message += "B if the letter is correct and in the wrong place\n"
     message += "<s>C</s> if the letter is not in the word\n\n"
 
-
     message += "Commands:\n"
     message += "/new: Make new game\n"
     message += "/new_cy: Make new 成语 game\n"
     message += "/new_q: Make new Quordle game\n"
     message += "/new_n [Num. Rounds] - e.g. '/new_n 10': Make new N-Wordle game\n"
     message += "/stop: Stop current game\n"
-    message += "/enter: Enter a word attempt\n"
+    message += "/enter [Word] or /e [Word]: Enter a word attempt\n"
     message += "/letters: See any remaining letters\n"
     message += "/scores: See which rounds you found the words in\n"
     message += "/reset_scores: Clear your round data\n"
@@ -890,7 +894,7 @@ def enterEnglishQuordle(update, context):
                 if (context.chat_data["mode"] == "quordle"):
                     context.chat_data["scores_quordle"].append(str(context.chat_data["attempt"]))
                 else:
-                    context.chat_data["scores_nwordle"].append(str(context.chat_data["attempt"]) + "/" + str(ACTUAL_MAX_ATTEMPTS))
+                    context.chat_data["scores_nwordle"].append(str(NUM_CHOSEN_WORDS) + ":" + str(context.chat_data["attempt"]))
 
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 return
@@ -935,10 +939,11 @@ def enterEnglishQuordle(update, context):
                     context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                 if (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS):
-                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\n" + NEW_GAME_MESSAGE, parse_mode=telegram.ParseMode.HTML)
+                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The words were: [" + "  ".join(actualWords) + "]\n", parse_mode=telegram.ParseMode.HTML)
 
                     stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
-                    context.chat_data["scores_quordle"].append("❌")
+                    context.chat_data["scores_nwordle"].append(str(NUM_CHOSEN_WORDS) + ":" + "❌")
+
 
 def enterEnglish(update, context):
 
@@ -1015,7 +1020,7 @@ def enterEnglish(update, context):
                 context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                 if (context.chat_data["attempt"] == MAX_ATTEMPTS):
-                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\n" + NEW_GAME_MESSAGE, parse_mode=telegram.ParseMode.HTML)
+                    context.bot.send_message(chat_id=chat_id, text="Last attempt failed. Game Over. The word was: " + actualWord + "\n", parse_mode=telegram.ParseMode.HTML)
 
                     stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                     context.chat_data["scores"].append("❌")
