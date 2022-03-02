@@ -477,10 +477,12 @@ def announce(update, context):
 
     isSuperUser = (userId == SUPERUSER_ID)
     if isSuperUser:
+
         if (chat_id < 0):
             return
 
         messageData = update.message.text.split(" ", 2)
+
         if len(messageData) < 3:
             context.bot.send_message(chat_id=userId, text="You need a message! Example: '/announce This is my message'", parse_mode=telegram.ParseMode.HTML)
             return
@@ -498,7 +500,7 @@ def announce(update, context):
             for chat_id in bot_data["chat_debug_data"]:
                 try:
                     if (send_chat_id == 0 or send_chat_id == chat_id):
-                        context.bot.send_message(chat_id=chat_id, text="<b>%s</b>" % message, parse_mode=telegram.ParseMode.HTML)
+                        context.bot.send_message(chat_id=chat_id, text="%s" % message, parse_mode=telegram.ParseMode.HTML)
                 except Unauthorized:
                     removedChatIds.append(chat_id)
                 except ChatMigrated as e:
@@ -754,7 +756,7 @@ def enterChinese(update, context):
                 context.chat_data["attempt"] += 1
                 context.chat_data["attempt_words"].append("     ".join(allWordsFormatted))
 
-                message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + " (" + meaning + "):\n-------------------\n"
+                message = "-------------------\nAttempt %d/%d (%s):\n-------------------\n" % (context.chat_data["attempt"], MAX_CY_ATTEMPTS, meaning)
                 count = 0
                 for word_str in context.chat_data["attempt_words"]:
                     message += word_str + "\n"
@@ -899,7 +901,8 @@ def enterEnglishQuordle(update, context):
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 return
             else:
-                message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
+                message = "-------------------\nAttempt %d/%d:\n-------------------\n" % (context.chat_data["attempt"], ACTUAL_MAX_ATTEMPTS)
+
                 ALL_CORRECT_PLACEHOLDER = "-------------------"
 
                 wordIdx = 0
@@ -1014,7 +1017,7 @@ def enterEnglish(update, context):
                 wordFormatted = wordFormatted.rstrip()
                 context.chat_data["attempt_words"].append(wordFormatted)
 
-                message = "-------------------\nAttempt " + str(context.chat_data["attempt"]) + ":\n-------------------\n"
+                message = "-------------------\nAttempt %d/6:\n-------------------\n" % context.chat_data["attempt"]
                 for word_str in context.chat_data["attempt_words"]:
                     message += word_str + "\n"
                 context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
