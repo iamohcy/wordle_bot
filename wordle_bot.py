@@ -56,7 +56,7 @@ class MQBot(telegram.bot.Bot):
         except:
             raise
 
-MAX_ALLOWED_WORDS = 16
+MAX_ALLOWED_WORDS = 10
 def new_quordle_game(update, context, allow_multiple=False):
     if (update.message == None):
         return
@@ -81,7 +81,7 @@ def new_quordle_game(update, context, allow_multiple=False):
                     if isSuperUser or numWords <= MAX_ALLOWED_WORDS:
                         NUM_CHOSEN_WORDS = numWords
                     else:
-                        context.bot.send_message(chat_id=chat_id, text="Max number of words is currently limited to 16. Creating N-Wordle game with 16 words...", parse_mode=telegram.ParseMode.HTML)
+                        context.bot.send_message(chat_id=chat_id, text="Max number of words is currently limited to %d. Creating N-Wordle game with %d words..." % (MAX_ALLOWED_WORDS, MAX_ALLOWED_WORDS), parse_mode=telegram.ParseMode.HTML)
                         NUM_CHOSEN_WORDS = numWords
                 except:
                     context.bot.send_message(chat_id=chat_id, text="Number of rounds not recognized as a number! Do e.g. /new_q 5 for a game with 5 words.", parse_mode=telegram.ParseMode.HTML)
@@ -901,7 +901,10 @@ def enterEnglishQuordle(update, context):
                 stopGame(context.chat_data, context.bot_data, chat_id, context.bot)
                 return
             else:
-                message = "-------------------\nAttempt %d/%d:\n-------------------\n" % (context.chat_data["attempt"], ACTUAL_MAX_ATTEMPTS)
+                if (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS >= 10):
+                    message = "Attempt %d/%d:\n" % (context.chat_data["attempt"], ACTUAL_MAX_ATTEMPTS)
+                else:
+                    message = "-------------------\nAttempt %d/%d:\n-------------------\n" % (context.chat_data["attempt"], ACTUAL_MAX_ATTEMPTS)
 
                 ALL_CORRECT_PLACEHOLDER = "-------------------"
 
@@ -916,7 +919,8 @@ def enterEnglishQuordle(update, context):
 
                 count = 0
                 for unsolvedAttemptIndex in range(len(unsolvedAttemptWords) // 2):
-
+                    if (context.chat_data["attempt"] >= 10):
+                        message += "---------------------------\n"
                     (attemptWordsLeftIdx, attemptWordsLeft) = unsolvedAttemptWords[unsolvedAttemptIndex*2]
                     (attemptWordsRightIdx, attemptWordsRight) = unsolvedAttemptWords[unsolvedAttemptIndex*2+1]
                     for wordAttemptIdx in range(context.chat_data["attempt"]):
@@ -924,12 +928,23 @@ def enterEnglishQuordle(update, context):
                         wordStrRight = attemptWordsRight[wordAttemptIdx]
                         message += wordStrLeft + "            " + wordStrRight + "\n"
                         count += 2
-                    message += "\n"
+
+                        if count >= 20:
+                            count = 0
+                            context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+                            message = ""
 
                     if count >= 10:
                         count = 0
                         context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
                         message = ""
+
+                    if (context.chat_data["attempt"] < 10):
+                        message += "\n"
+
+                if count > 0:
+                    context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
+                    message = ""
 
                 # If odd number, print the last word to the left
                 if (len(unsolvedAttemptWords) % 2 == 1):
