@@ -953,7 +953,7 @@ def enterEnglishQuordle(update, context):
                         wordStr = attemptWords[wordAttemptIdx]
                         message += wordStr + "\n"
 
-                if len(message) > 0:
+                if len(message.strip()) > 0:
                     context.bot.send_message(chat_id=chat_id, text=message, parse_mode=telegram.ParseMode.HTML)
 
                 if (context.chat_data["attempt"] == ACTUAL_MAX_ATTEMPTS):
